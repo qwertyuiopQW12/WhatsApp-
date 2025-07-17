@@ -1,0 +1,518 @@
+<!DOCTYPE html><html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>وتساب الذهبي PRO</title>
+  
+   <style>
+    :root {
+      --primary-dark: #075e54;
+      --primary-light: #128c7e;
+      --accent-color: #25d366;
+      --text-dark: #075e54;
+      --text-light: #ece5dd;
+      --bubble-sent: #dcf8c6;
+      --bubble-received: #ffffff;
+      --status-bg: #f8f9fa;
+      --calls-bg: #f5f5f5;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+    
+    body {
+      background: linear-gradient(135deg, #e6f3ef 0%, #c8e8e1 100%);
+      height: 100vh;
+      overflow: hidden;
+    }
+    
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+      max-width: 500px;
+      margin: 0 auto;
+      background: white;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    /* Header Styles */
+    .app-header {
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary-light));
+      color: white;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      position: relative;
+      z-index: 10;
+    }
+    
+    .header-title {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+    
+    .header-icons {
+      display: flex;
+      gap: 20px;
+    }
+    
+    .header-icons i {
+      font-size: 20px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    
+    .header-icons i:hover {
+      transform: scale(1.1);
+    }
+    
+    /* Tab Styles */
+    .app-tabs {
+      display: flex;
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary-light));
+      position: relative;
+    }
+    
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 12px 0;
+      color: rgba(255, 255, 255, 0.7);
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    
+    .tab.active {
+      color: white;
+      font-weight: 600;
+    }
+    
+    .tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 50%;
+      height: 3px;
+      background: var(--accent-color);
+      border-radius: 3px 3px 0 0;
+    }
+    
+    /* Content Area */
+    .content-area {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .content-section {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 100%;
+      height: 100%;
+      padding: 10px;
+      overflow-y: auto;
+      transition: transform 0.4s ease, opacity 0.3s ease;
+    }
+    
+    .content-section.hidden {
+      transform: translateX(100%);
+      opacity: 0;
+      pointer-events: none;
+    }
+    
+    /* Chat List Styles */
+    .chat-list {
+      background: linear-gradient(to bottom, #ffffff, #f9f9f9);
+    }
+    
+    .chat-item {
+      display: flex;
+      padding: 12px 15px;
+      border-bottom: 1px solid #f0f0f0;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    
+    .chat-item:hover {
+      background: #f5f5f5;
+      transform: translateX(-5px);
+    }
+    
+    .chat-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: var(--primary-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 20px;
+      margin-left: 15px;
+      position: relative;
+      transition: transform 0.3s ease;
+    }
+    
+    .chat-item:hover .chat-avatar {
+      transform: scale(1.1);
+    }
+    
+    .chat-avatar.online::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 12px;
+      height: 12px;
+      background: var(--accent-color);
+      border-radius: 50%;
+      border: 2px solid white;
+    }
+    
+    .chat-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    
+    .chat-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 5px;
+    }
+    
+    .chat-name {
+      font-weight: 600;
+      color: var(--text-dark);
+    }
+    
+    .chat-time {
+      font-size: 12px;
+      color: #888;
+    }
+    
+    .chat-message {
+      display: flex;
+      align-items: center;
+      font-size: 14px;
+      color: #666;
+    }
+    
+    .chat-message.unread {
+      font-weight: 600;
+      color: var(--text-dark);
+    }
+    
+    .chat-message i {
+      margin-left: 5px;
+      color: var(--accent-color);
+    }
+    
+    /* Status Section */
+    .status-section {
+      background: var(--status-bg);
+    }
+    
+    .status-item {
+      display: flex;
+      padding: 15px;
+      align-items: center;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .status-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: var(--primary-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      margin-left: 15px;
+      position: relative;
+      border: 2px solid var(--accent-color);
+    }
+    
+    .status-content {
+      flex: 1;
+    }
+    
+    .status-name {
+      font-weight: 600;
+      margin-bottom: 3px;
+    }
+    
+    .status-time {
+      font-size: 12px;
+      color: #888;
+    }
+    
+    /* Calls Section */
+    .calls-section {
+      background: var(--calls-bg);
+    }
+    
+    .call-item {
+      display: flex;
+      padding: 15px;
+      align-items: center;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .call-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: var(--primary-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      margin-left: 15px;
+    }
+    
+    .call-content {
+      flex: 1;
+    }
+    
+    .call-info {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 5px;
+    }
+    
+    .call-name {
+      font-weight: 600;
+    }
+    
+    .call-type {
+      font-size: 14px;
+      color: #666;
+      display: flex;
+      align-items: center;
+    }
+    
+    .call-type i {
+      margin-left: 5px;
+    }
+    
+    .call-time {
+      font-size: 12px;
+      color: #888;
+    }
+    
+    .call-outgoing {
+      color: var(--accent-color);
+    }
+    
+    .call-incoming {
+      color: #888;
+    }
+    
+    .call-missed {
+      color: #ff4444;
+    }
+    
+    /* Floating Action Button */
+    .fab {
+      position: absolute;
+      bottom: 25px;
+      left: 25px;
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, var(--accent-color), #1db954);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 28px;
+      box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      z-index: 20;
+    }
+    
+    .fab:hover {
+      transform: scale(1.1) translateY(-5px);
+      box-shadow: 0 6px 20px rgba(37, 211, 102, 0.6);
+    }
+    
+    /* Animated Background */
+    .bg-pattern {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.03;
+      background-image: radial-gradient(var(--primary-dark) 1px, transparent 1px);
+      background-size: 20px 20px;
+      z-index: 0;
+    }
+    
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 5px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: var(--primary-light);
+      border-radius: 5px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--primary-dark);
+    }
+    
+    /* Animation */
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    
+    .pulse {
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.5s ease forwards;
+    }
+    
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.3s; }
+    .delay-4 { animation-delay: 0.4s; }
+    .delay-5 { animation-delay: 0.5s; }
+  </style>
+ 
+ 
+ 
+ <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#075e54">
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+  <div class="app-container">
+    <div class="bg-pattern"></div><header class="app-header">
+  <div class="header-title">وتساب السديم PRO</div>
+  <div class="header-icons">
+    <i class="fas fa-search"></i>
+    <i class="fas fa-ellipsis-v"></i>
+  </div>
+</header>
+
+<div class="app-tabs">
+  <div class="tab active" onclick="showSection('chats')"><i class="fas fa-comment-alt"></i> المحادثات</div>
+  <div class="tab" onclick="showSection('status')"><i class="fas fa-history"></i> الحالة</div>
+  <div class="tab" onclick="showSection('calls')"><i class="fas fa-phone-alt"></i> المكالمات</div>
+  <div class="tab" onclick="showSection('groups')"><i class="fas fa-users"></i> المجموعات</div>
+  <div class="tab" onclick="showSection('communities')"><i class="fas fa-layer-group"></i> المجتمعات</div>
+</div>
+
+<div class="content-area">
+  <!-- Chats Section -->
+  <div class="content-section" id="chats-section">...محتوى الدردشات...</div>
+  <!-- Status Section -->
+  <div class="content-section hidden" id="status-section">...محتوى الحالة...</div>
+  <!-- Calls Section -->
+  <div class="content-section hidden" id="calls-section">...محتوى المكالمات...</div>
+  <!-- Groups Section -->
+  <div class="content-section hidden" id="groups-section">
+    <div class="chat-list">
+      <div class="chat-item fade-in delay-1">
+        <div class="chat-avatar">📢</div>
+        <div class="chat-content">
+          <div class="chat-header">
+            <span class="chat-name">مجموعة الأصدقاء</span>
+            <span class="chat-time">اليوم</span>
+          </div>
+          <div class="chat-message">
+            <span>تمت إضافة منشور جديد</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Communities Section -->
+  <div class="content-section hidden" id="communities-section">
+    <div class="chat-list">
+      <div class="chat-item fade-in delay-1">
+        <div class="chat-avatar">🌐</div>
+        <div class="chat-content">
+          <div class="chat-header">
+            <span class="chat-name">مجتمع التقنية</span>
+            <span class="chat-time">أمس</span>
+          </div>
+          <div class="chat-message">
+            <span>أهلاً بك في المجتمع!</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="fab pulse">
+  <i class="fas fa-comment-alt"></i>
+</div>
+
+  </div>  <script>
+    function showSection(sectionId) {
+      document.querySelectorAll('.content-section').forEach(section => {
+        section.classList.add('hidden');
+      });
+
+      document.getElementById(sectionId + '-section').classList.remove('hidden');
+
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      event.currentTarget.classList.add('active');
+
+      const items = document.querySelectorAll(`#${sectionId}-section .fade-in`);
+      items.forEach(item => {
+        item.style.animation = 'none';
+        setTimeout(() => {
+          item.style.animation = '';
+        }, 10);
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      showSection('chats');
+    });
+  </script></body>
+</html>
